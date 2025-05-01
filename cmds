@@ -1,1 +1,6 @@
 pip3 install speechrecognition pyttsx3 opencv-python opencv-python-headless numpy requests pywhatkit pyaudio
+
+
+
+
+sudo apt install python3-venv python3-full -y
