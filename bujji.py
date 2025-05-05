@@ -4,13 +4,34 @@ import time
 import pywhatkit as kit
 import cv2
 import ollama
-from piper import Piper
 from datetime import datetime
 import pytz
 
-# Initialize recognizer and Piper (text-to-speech)
-recog = sr.Recognizer()
-piper = Piper()
+import subprocess
+import uuid
+import os
+
+PIPER_MODEL_PATH = "/home/vishwaraspi/Downloads/piper/en_US-kathleen-low.onnx"
+
+def speak(text):
+    filename = f"/tmp/bujji_{uuid.uuid4().hex}.wav"
+    try:
+        # Run the Piper command to generate the speech audio
+        subprocess.run(
+            ["piper", "--model", PIPER_MODEL_PATH, "--output_file", filename],
+            input=text,
+            text=True,
+            check=True
+        )
+
+        # Play the generated WAV file using aplay
+        subprocess.run(["aplay", filename])
+
+        # Clean up
+        os.remove(filename)
+
+    except Exception as e:
+        print(f"BUJJI: Voice system error - {e}")
 
 def ask_bujji(prompt):
     response = ollama.chat(
@@ -37,17 +58,17 @@ def listen_command():
             return command
 
         except sr.WaitTimeoutError:
-            piper.play("You ghosted me, huh? Say something.")
+            speak("You ghosted me, huh? Say something.")
             return ""
         except sr.UnknownValueError:
-            piper.play("Speak up. You sound like static.")
+            speak("Speak up. You sound like static.")
             return ""
         except sr.RequestError:
-            piper.play("Net's trippin'. Can't fetch anything without it.")
+            speak("Net's trippin'. Can't fetch anything without it.")
             return ""
 
-piper.play("BUJJI online. You breathing, boss?")
-piper.play("Pick a mode, legendary soul.")
+speak("BUJJI online. You breathing, boss?")
+speak("Pick a mode, legendary soul.")
 print("BUJJI is waiting on the mighty one...")
 
 sleep_mode = False
@@ -59,7 +80,7 @@ while True:
             while True:
                 wake_up = listen_command()
                 if "wake up" in wake_up:
-                    piper.play("BUJJI back on the grind, boss.")
+                    speak("BUJJI back on the grind, boss.")
                     sleep_mode = False
                     break
 
@@ -67,67 +88,67 @@ while True:
         print(f"You: {mode}")
 
         if "bujji sleep" in mode:
-            piper.play("Powering down into stealth mode. Holler when you need me.")
+            speak("Powering down into stealth mode. Holler when you need me.")
             sleep_mode = True
             continue
 
         if "exit" in mode or "quit" in mode:
-            piper.play("BUJJI signing off. Live legendary, boss.")
+            speak("BUJJI signing off. Live legendary, boss.")
             print("BUJJI: Shutdown complete.")
             break
 
         elif "general level" in mode:
-            piper.play("General level active. Hit me with your brainwaves.")
+            speak("General level active. Hit me with your brainwaves.")
             while True:
                 user_input = listen_command()
                 if "bujji sleep" in user_input:
-                    piper.play("Going stealth. Stay sharp.")
+                    speak("Going stealth. Stay sharp.")
                     sleep_mode = True
                     break
                 if "exit" in user_input:
-                    piper.play("Peace out from general level.")
+                    speak("Peace out from general level.")
                     break
                 response = ask_bujji(user_input)
                 print("BUJJI:", response)
-                piper.play(response)
+                speak(response)
 
         elif "whatsapp" in mode:
-            piper.play("WhatsApp mode locked and loaded.")
+            speak("WhatsApp mode locked and loaded.")
             while True:
-                piper.play("You want savage message help or freestyle it?")
+                speak("You want savage message help or freestyle it?")
                 whatsapp_choice = listen_command()
 
                 if "bujji sleep" in whatsapp_choice:
-                    piper.play("Going ghost.")
+                    speak("Going ghost.")
                     sleep_mode = True
                     break
                 if "exit" in whatsapp_choice:
-                    piper.play("Exiting WhatsApp vibes.")
+                    speak("Exiting WhatsApp vibes.")
                     break
                 if "help" in whatsapp_choice:
-                    piper.play("Tell me what to spin, boss.")
+                    speak("Tell me what to spin, boss.")
                     user_message = listen_command()
                     ai_response = ask_bujji(user_message)
                     print("BUJJI:", ai_response)
-                    piper.play(ai_response)
+                    speak(ai_response)
                     kit.sendwhatmsg_instantly("+918248454249", ai_response, 60, True, 2)
-                    piper.play("Message deployed.")
+                    speak("Message deployed.")
                 elif "no" in whatsapp_choice:
-                    piper.play("Tell me what to blast.")
+                    speak("Tell me what to blast.")
                     user_message = listen_command()
                     kit.sendwhatmsg_instantly("+918248454249", user_message, 5, True, 2)
-                    piper.play("Message deployed.")
+                    speak("Message deployed.")
                 else:
-                    piper.play("Say no if you wanna freestyle.")
+                    speak("Say no if you wanna freestyle.")
 
         elif "lock in" in mode:
-            piper.play("Lock-in mode. Hope you tanked the last battle.")
+            speak("Lock-in mode. Hope you tanked the last battle.")
             print("BUJJI: Locked in. Focus up.")
 
         elif "image check" in mode:
             cam = cv2.VideoCapture(0)
             if not cam.isOpened():
-                print("Webcam’s hiding.")
+                print("Webcam's hiding.")
                 exit()
             print("Press SPACE to snap or ESC to flee.")
 
@@ -162,7 +183,7 @@ while True:
             )
             print("\n🔍 BUJJI’s Cam Insight:")
             print(res['message']['content'])
-            piper.play(res['message']['content'])
+            speak(res['message']['content'])
 
         elif "what is the weather" in mode:
             timezone = pytz.timezone('Asia/Kolkata')
@@ -174,7 +195,7 @@ while True:
             )
 
             if weather_data.json()['cod'] == '404':
-                piper.play("That city doesn’t exist in my scrolls.")
+                speak("That city doesn’t exist in my scrolls.")
             else:
                 weather = weather_data.json()['weather'][0]['main']
                 description = weather_data.json()['weather'][0]['description']
@@ -182,24 +203,24 @@ while True:
                 temp = int((temp - 32) * 5 / 9)
                 country = weather_data.json()['sys']['country']
                 time = datetime.now(timezone)
-                piper.play(f"Clock check: {time.strftime('%Y-%m-%d %H:%M:%S')}")
-                piper.play(f"{user_input}, {country} is rocking some {weather}.")
-                piper.play(f"Details: {description.capitalize()}")
-                piper.play(f"Temp’s around {temp} degrees Celsius.")
+                speak(f"Clock check: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+                speak(f"{user_input}, {country} is rocking some {weather}.")
+                speak(f"Details: {description.capitalize()}")
+                speak(f"Temp’s around {temp} degrees Celsius.")
 
         elif "lame joke" in mode:
             url = 'https://official-joke-api.appspot.com/random_joke'
             response = requests.get(url)
             if response.status_code == 200:
                 joke = response.json()
-                piper.play(f"Ready to cringe? {joke['setup']}")
-                piper.play(joke['punchline'])
-                piper.play("HAHA. That was criminal. You're welcome.")
+                speak(f"Ready to cringe? {joke['setup']}")
+                speak(joke['punchline'])
+                speak("HAHA. That was criminal. You're welcome.")
             else:
-                piper.play("Even the internet refused to joke today.")
+                speak("Even the internet refused to joke today.")
 
         elif "open google" in mode:
-            piper.play("Opening Google. What are we hunting, boss?")
+            speak("Opening Google. What are we hunting, boss?")
             gsearch = listen_command()
             kit.search(gsearch)
         elif "last option" in mode:
@@ -207,4 +228,4 @@ while True:
 
     except Exception as e:
         print(f"BUJJI: Glitched out - {e}")
-        piper.play("Something broke. Not on me tho.")
+        speak("Something broke. Not on me tho.")
