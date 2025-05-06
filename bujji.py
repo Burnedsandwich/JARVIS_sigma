@@ -19,7 +19,7 @@ engine.setProperty('voice', voices[0].id)
 engine.setProperty('rate', 150)
 
 def ask_bujji(prompt):
-    client = genai.Client(api_key="AIzaSyDUNgnzgJHRNKOIClEVw72n2zbZTtN4MqI")
+    client = genai.Client(api_key="")
 
     character_prompt = f"""
     You are BUJJI, a savage assistant who helps with sarcasm and swagger — be family-friendly, but respond like a boss.
