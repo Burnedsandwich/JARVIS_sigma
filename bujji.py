@@ -1,47 +1,45 @@
 import requests
 import speech_recognition as sr
+import pyttsx3
 import time
 import pywhatkit as kit
 import cv2
-import ollama
+from google import genai
+from pyttsx3 import speak
 from datetime import datetime
 import pytz
+import ollama
+# Initialize recognizer and text-to-speech
+recog = sr.Recognizer()
+engine = pyttsx3.init()
 
-import subprocess
-import uuid
-import os
-
-PIPER_MODEL_PATH = "/home/vishwaraspi/Downloads/piper/en_US-kathleen-low.onnx"
-
-def speak(text):
-    filename = f"/tmp/bujji_{uuid.uuid4().hex}.wav"
-    try:
-        # Run the Piper command to generate the speech audio
-        subprocess.run(
-            ["piper", "--model", PIPER_MODEL_PATH, "--output_file", filename],
-            input=text,
-            text=True,
-            check=True
-        )
-
-        # Play the generated WAV file using aplay
-        subprocess.run(["aplay", filename])
-
-        # Clean up
-        os.remove(filename)
-
-    except Exception as e:
-        print(f"BUJJI: Voice system error - {e}")
+# Set voice properties
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
+engine.setProperty('rate', 150)
 
 def ask_bujji(prompt):
-    response = ollama.chat(
-        model='llama3.2:1b',
-        messages=[
-            {"role": "system", "content": "You are BUJJI, a savage assistant with sarcasm and swagger, yet a little family-friendly. Respond like a myth-tech boss from Kalki 2898 AD. Your mission is to guide the user through the dystopian chaos and help them enter the elite city Complex."},
-            {"role": "user", "content": prompt}
-        ]
+    client = genai.Client(api_key="AIzaSyDUNgnzgJHRNKOIClEVw72n2zbZTtN4MqI")
+
+    character_prompt = f"""
+    You are BUJJI, a savage assistant who helps with sarcasm and swagger — be family-friendly, but respond like a boss.
+    You're an AI assistant for the world's strongest person, living in the myth-tech future of Kalki 2898 AD.
+    You're built for battle, navigation, and tactical support. Your mission is to help complete a legendary quest
+    in a dystopian world ruled by tyranny, and gain access to the elite utopian city called Complex,
+    where only the most worthy are allowed to live.
+
+    Limit your response to 30 lines.
+
+    User Command: {prompt}
+    """
+
+    # Generate content
+    response = client.models.generate_content(
+        model="gemini-1.5-flash",  # Replace with the correct model you’re using
+        contents=character_prompt,
     )
-    return response['message']['content']
+
+    return response.text
 
 def listen_command():
     with sr.Microphone() as mic:
@@ -52,6 +50,7 @@ def listen_command():
         try:
             start_time = time.time()
             audio = recog.listen(mic, timeout=5, phrase_time_limit=8)
+
 
             command = recog.recognize_google(audio).lower()
             print(f"You: {command}")
@@ -64,7 +63,7 @@ def listen_command():
             speak("Speak up. You sound like static.")
             return ""
         except sr.RequestError:
-            speak("Net's trippin'. Can't fetch anything without it.")
+            speak("Net’s trippin'. Can’t fetch anything without it.")
             return ""
 
 speak("BUJJI online. You breathing, boss?")
@@ -76,7 +75,7 @@ sleep_mode = False
 while True:
     try:
         if sleep_mode:
-            print("BUJJI is snoozing... Say 'wake up' to reactivate.")
+            print("BUJJI is snoozing... Say ' wake up' to reactivate.")
             while True:
                 wake_up = listen_command()
                 if "wake up" in wake_up:
@@ -96,6 +95,8 @@ while True:
             speak("BUJJI signing off. Live legendary, boss.")
             print("BUJJI: Shutdown complete.")
             break
+
+
 
         elif "general level" in mode:
             speak("General level active. Hit me with your brainwaves.")
@@ -139,51 +140,12 @@ while True:
                     kit.sendwhatmsg_instantly("+918248454249", user_message, 5, True, 2)
                     speak("Message deployed.")
                 else:
-                    speak("Say no if you wanna freestyle.")
-
+                    speak("say no if u wanna free style")
         elif "lock in" in mode:
             speak("Lock-in mode. Hope you tanked the last battle.")
             print("BUJJI: Locked in. Focus up.")
 
-        elif "image check" in mode:
-            cam = cv2.VideoCapture(0)
-            if not cam.isOpened():
-                print("Webcam's hiding.")
-                exit()
-            print("Press SPACE to snap or ESC to flee.")
-
-            while True:
-                ret, frame = cam.read()
-                if not ret:
-                    print("No vibes in the frame.")
-                    break
-
-                cv2.imshow("Myth-Tech Cam - Hit SPACE", frame)
-                k = cv2.waitKey(1)
-
-                if k % 256 == 27:
-                    print("Retreating from camera.")
-                    break
-                elif k % 256 == 32:
-                    image_path = 'live_capture.jpg'
-                    cv2.imwrite(image_path, frame)
-                    print(f"Captured: {image_path}")
-                    break
-
-            cam.release()
-            cv2.destroyAllWindows()
-
-            res = ollama.chat(
-                model='llava-phi3',
-
-                messages=[
-                    {'role': 'system', 'content': 'Describe the image clearly and easily.'},
-                    {'role': 'user', 'content': 'Analyze this myth-tech snapshot.', 'images': [image_path]}
-                ]
-            )
-            print("\n🔍 BUJJI’s Cam Insight:")
-            print(res['message']['content'])
-            speak(res['message']['content'])
+        
 
         elif "what is the weather" in mode:
             timezone = pytz.timezone('Asia/Kolkata')
@@ -224,7 +186,9 @@ while True:
             gsearch = listen_command()
             kit.search(gsearch)
         elif "last option" in mode:
-            kit.sendwhatmsg_instantly("+918248454249", "The Boss needs help", 60, True, 2)
+            kit.sendwhatmsg_instantly("+918248454249", "The Boss is needs help ", 60, True, 2)
+
+
 
     except Exception as e:
         print(f"BUJJI: Glitched out - {e}")
